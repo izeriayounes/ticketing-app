@@ -2,6 +2,7 @@ import request from 'supertest';
 import { app } from '../../app';
 import { Ticket } from '../../models/ticket';
 import mongoose from 'mongoose';
+import { ticketUpdatedPublisher } from '../../services/ticket-updated-publisher';
 
 it('returns a 404 error if ticket is not found', async () => {
   const id = new mongoose.Types.ObjectId().toHexString();
@@ -93,4 +94,22 @@ it('Updates the ticket with provided valid inputs', async () => {
 
   expect(ticketResponse.body.title).toEqual('modified title');
   expect(ticketResponse.body.price).toEqual(20);
+});
+
+it('publishes an event', async () => {
+  const response = await request(app)
+    .post('/api/tickets')
+    .set('Cookie', global.signin())
+    .send({ title: 'sdfsf', price: 23 });
+
+  await request(app)
+    .put(`/api/tickets/${response.body.id}`)
+    .set('Cookie', global.signin())
+    .send({
+      title: 'modified title',
+      price: 20,
+    })
+    .expect(200);
+
+  expect(ticketUpdatedPublisher.publish).toHaveBeenCalled();
 });

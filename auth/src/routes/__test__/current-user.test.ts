@@ -4,9 +4,11 @@ import { app } from '../../app';
 it('reponses with details about current user', async () => {
   const cookie = await global.signin();
 
+  if (!cookie) throw new Error('Cookie not set after signup');
+
   const res = await request(app)
     .get('/api/users/currentuser')
-    .set('Cookie', cookie!)
+    .set('Cookie', cookie)
     .send()
     .expect(200);
 

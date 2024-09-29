@@ -7,6 +7,7 @@ import {
   validateRequest,
 } from '@eztickets/common';
 import { body } from 'express-validator';
+import { ticketUpdatedPublisher } from '../services/ticket-updated-publisher';
 
 const updateTicketRouter = express.Router();
 
@@ -34,6 +35,13 @@ updateTicketRouter.put(
     ticket.set(req.body);
 
     await ticket.save();
+
+    await ticketUpdatedPublisher.publish({
+      id: ticket.id,
+      title: ticket.title,
+      price: ticket.price,
+      userId: ticket.userId,
+    });
 
     res.status(200).send(ticket);
   }

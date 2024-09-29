@@ -6,14 +6,14 @@ declare global {
   var signin: () => string[];
 }
 
-jest.mock('../services/ticket-created-publisher', () => ({
-  ticketCreatedPublisher: {
+jest.mock('../services/order-created-publisher', () => ({
+  orderCreatedPublisher: {
     publish: jest.fn().mockResolvedValue(true),
   },
 }));
 
-jest.mock('../services/ticket-updated-publisher', () => ({
-  ticketUpdatedPublisher: {
+jest.mock('../services/order-cancelled-publisher', () => ({
+  orderCancelledPublisher: {
     publish: jest.fn().mockResolvedValue(true),
   },
 }));
@@ -28,7 +28,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  jest.clearAllMocks();
   const collections = await mongoose.connection.db!.collections();
 
   for (let collection of collections) {
@@ -44,8 +43,9 @@ afterAll(async () => {
 });
 
 global.signin = () => {
+  const id = new mongoose.Types.ObjectId().toHexString();
+
   const email = 'test@test.com';
-  const id = 'userid';
 
   const token = jwt.sign({ id, email }, process.env.JWT_KEY!);
   const session = { jwt: token };
