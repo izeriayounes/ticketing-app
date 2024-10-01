@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import { app } from './app';
 import { rabbitMQ } from '@eztickets/common';
+import { ticketCreatedPublisher } from './events/publishers/ticket-created-publisher';
+import { orderCreatedListener } from './events/listeners/order-created-listener';
+import { orderCancelledListener } from './events/listeners/order-cancelled-listener';
 
 const start = async () => {
   if (!process.env.JWT_KEY) {
@@ -18,6 +21,9 @@ const start = async () => {
 
     await rabbitMQ.connect(process.env.RABBITMQ_URI);
     console.log('Connected to RabbitMQ');
+
+    orderCreatedListener.listen();
+    orderCancelledListener.listen();
   } catch (err) {
     console.error(err);
   }

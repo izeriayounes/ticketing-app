@@ -2,8 +2,9 @@ import request from 'supertest';
 import { app } from '../../app';
 import mongoose from 'mongoose';
 import { Ticket } from '../../models/ticket';
-import { Order, OrderStatus } from '../../models/order';
-import { orderCreatedPublisher } from '../../services/order-created-publisher';
+import { orderCreatedPublisher } from '../../events/publishers/order-created-publisher';
+
+let id = new mongoose.Types.ObjectId().toHexString();
 
 it('returns an error if the ticket does not exist ', async () => {
   const ticketId = new mongoose.Types.ObjectId();
@@ -15,7 +16,7 @@ it('returns an error if the ticket does not exist ', async () => {
 });
 
 it('returns an error if the ticket is already reserved ', async () => {
-  const ticket = Ticket.build({ title: 'reverved ticket', price: 34 });
+  const ticket = Ticket.build({ id, title: 'reverved ticket', price: 34 });
   await ticket.save();
 
   await request(app)
@@ -32,7 +33,7 @@ it('returns an error if the ticket is already reserved ', async () => {
 });
 
 it('reserves a ticket ', async () => {
-  const ticket = Ticket.build({ title: 'reverved ticket', price: 34 });
+  const ticket = Ticket.build({ id, title: 'reverved ticket', price: 34 });
   await ticket.save();
 
   await request(app)
@@ -43,7 +44,7 @@ it('reserves a ticket ', async () => {
 });
 
 it('emits an order create event.', async () => {
-  const ticket = Ticket.build({ title: 'reverved ticket', price: 34 });
+  const ticket = Ticket.build({ id, title: 'reverved ticket', price: 34 });
   await ticket.save();
 
   await request(app)

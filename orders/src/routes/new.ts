@@ -9,7 +9,7 @@ import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
 import { Ticket } from '../models/ticket';
 import { Order, OrderStatus } from '../models/order';
-import { orderCreatedPublisher } from '../services/order-created-publisher';
+import { orderCreatedPublisher } from '../events/publishers/order-created-publisher';
 
 const newOrderRouter = express.Router();
 
@@ -54,6 +54,7 @@ newOrderRouter.post(
       status: order.status,
       userId: order.userId,
       expiresAt: order.expiresAt.toISOString(),
+      version: order.version,
       ticket: {
         id: ticket.id,
         price: ticket.price,

@@ -6,17 +6,30 @@ declare global {
   var signin: () => string[];
 }
 
-jest.mock('../services/order-created-publisher', () => ({
+jest.mock('../events/publishers/order-created-publisher', () => ({
   orderCreatedPublisher: {
     publish: jest.fn().mockResolvedValue(true),
   },
 }));
 
-jest.mock('../services/order-cancelled-publisher', () => ({
+jest.mock('../events/publishers/order-cancelled-publisher', () => ({
   orderCancelledPublisher: {
     publish: jest.fn().mockResolvedValue(true),
   },
 }));
+
+jest.mock('@eztickets/common', () => {
+  const actualModule = jest.requireActual('@eztickets/common');
+
+  return {
+    ...actualModule,
+    rabbitMQ: {
+      getChannel: jest.fn().mockReturnValue({
+        ack: jest.fn(),
+      }),
+    },
+  };
+});
 
 let mongo: any;
 beforeAll(async () => {
@@ -28,6 +41,8 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  jest.clearAllMocks();
+
   const collections = await mongoose.connection.db!.collections();
 
   for (let collection of collections) {

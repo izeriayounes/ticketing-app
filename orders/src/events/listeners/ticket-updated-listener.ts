@@ -2,8 +2,8 @@ import { EventNames, rabbitMQ } from '@eztickets/common';
 import { ConsumeMessage } from 'amqplib';
 import { Ticket } from '../../models/ticket';
 
-class TicketCreatedListener {
-  private queue = EventNames.TicketCreated;
+class TicketUpdatedListener {
+  private queue = EventNames.TicketUpdated;
 
   async listen(): Promise<void> {
     await rabbitMQ.consume(this.queue, this.onMessage.bind(this));
@@ -13,14 +13,13 @@ class TicketCreatedListener {
     if (msg) {
       console.log(`Received event: ${this.queue}`);
 
-      const { id, title, price } = JSON.parse(msg.content.toString());
+      const { id, title, price, version } = JSON.parse(msg.content.toString());
 
-      const ticket = Ticket.build({
-        id,
-        title,
-        price,
-      });
+      const ticket = await Ticket.findByEvent({ id, version });
 
+      if (!ticket) throw Error('Ticket not found');
+
+      ticket.set({ title, price });
       await ticket.save();
 
       rabbitMQ.getChannel().ack(msg);
@@ -28,4 +27,4 @@ class TicketCreatedListener {
   }
 }
 
-export const ticketCreatedListener = new TicketCreatedListener();
+export const ticketUpdatedListener = new TicketUpdatedListener();

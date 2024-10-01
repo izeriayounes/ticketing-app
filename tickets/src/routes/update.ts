@@ -1,13 +1,14 @@
 import express, { Request, Response } from 'express';
 import { Ticket } from '../models/ticket';
 import {
+  BadRequestError,
   NotAuthorizedError,
   NotFoundError,
   requireAuth,
   validateRequest,
 } from '@eztickets/common';
 import { body } from 'express-validator';
-import { ticketUpdatedPublisher } from '../services/ticket-updated-publisher';
+import { ticketUpdatedPublisher } from '../events/publishers/ticket-updated-publisher';
 
 const updateTicketRouter = express.Router();
 
@@ -24,20 +25,19 @@ updateTicketRouter.put(
   async (req: Request, res: Response) => {
     const ticket = await Ticket.findById(req.params.id);
 
-    if (!ticket) {
-      throw new NotFoundError();
-    }
+    if (!ticket) throw new NotFoundError();
 
-    if (req.currentUser!.id !== ticket.userId) {
-      throw new NotAuthorizedError();
-    }
+    if (req.currentUser!.id !== ticket.userId) throw new NotAuthorizedError();
+
+    if (ticket.orderId)
+      throw new BadRequestError('Cannot edit a reserved ticket');
 
     ticket.set(req.body);
-
     await ticket.save();
 
     await ticketUpdatedPublisher.publish({
       id: ticket.id,
+      version: ticket.version,
       title: ticket.title,
       price: ticket.price,
       userId: ticket.userId,

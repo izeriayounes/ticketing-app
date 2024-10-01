@@ -2,7 +2,7 @@ import { requireAuth, validateRequest } from '@eztickets/common';
 import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
 import { Ticket } from '../models/ticket';
-import { ticketCreatedPublisher } from '../services/ticket-created-publisher';
+import { ticketCreatedPublisher } from '../events/publishers/ticket-created-publisher';
 
 const createTicketRouter = express.Router();
 
@@ -24,8 +24,10 @@ createTicketRouter.post(
 
     await ticketCreatedPublisher.publish({
       id: ticket.id,
+      version: ticket.version,
       title: ticket.title,
       price: ticket.price,
+      userId: ticket.userId,
     });
 
     res.status(201).send(ticket);

@@ -3,10 +3,12 @@ import { Ticket } from '../../models/ticket';
 import { app } from '../../app';
 import { OrderStatus } from '@eztickets/common';
 import { Order } from '../../models/order';
-import { orderCancelledPublisher } from '../../services/order-cancelled-publisher';
+import { orderCancelledPublisher } from '../../events/publishers/order-cancelled-publisher';
+import mongoose from 'mongoose';
 
 it('cancels the order', async () => {
   const ticket = Ticket.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'concert',
     price: 120,
   });
@@ -29,7 +31,10 @@ it('cancels the order', async () => {
 });
 
 it('emits an orderCancelled event', async () => {
+  const id = new mongoose.Types.ObjectId().toHexString();
+
   const ticket = Ticket.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'concert',
     price: 120,
   });

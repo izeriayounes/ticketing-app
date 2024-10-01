@@ -6,7 +6,7 @@ import {
   OrderStatus,
   requireAuth,
 } from '@eztickets/common';
-import { orderCancelledPublisher } from '../services/order-cancelled-publisher';
+import { orderCancelledPublisher } from '../events/publishers/order-cancelled-publisher';
 const deleteOrderRouter = Router();
 
 deleteOrderRouter.delete(
@@ -22,9 +22,9 @@ deleteOrderRouter.delete(
     order.status = OrderStatus.Cancelled;
     await order.save();
 
-    //publish orderCancelled event
     orderCancelledPublisher.publish({
       id: order.id,
+      version: order.version,
       ticket: {
         id: order.ticket.id,
       },

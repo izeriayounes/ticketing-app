@@ -18,6 +18,8 @@ spec:
           env:
             - name: MONGO_URI
               value: 'mongodb://orders-mongo-srv:27017/orders'
+            - name: RABBITMQ_URI
+              value: 'amqp://rabbitmq-srv:5672'
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
