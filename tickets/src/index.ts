@@ -1,9 +1,8 @@
 import mongoose from 'mongoose';
 import { app } from './app';
-import { rabbitMQ } from '@eztickets/common';
-import { ticketCreatedPublisher } from './events/publishers/ticket-created-publisher';
-import { orderCreatedListener } from './events/listeners/order-created-listener';
-import { orderCancelledListener } from './events/listeners/order-cancelled-listener';
+import { OrderCreatedListener } from './events/listeners/order-created-listener';
+import { OrderCancelledListener } from './events/listeners/order-cancelled-listener';
+import { rabbitMQ } from './rabbitmq';
 
 const start = async () => {
   if (!process.env.JWT_KEY) {
@@ -22,8 +21,18 @@ const start = async () => {
     await rabbitMQ.connect(process.env.RABBITMQ_URI);
     console.log('Connected to RabbitMQ');
 
-    orderCreatedListener.listen();
-    orderCancelledListener.listen();
+    new OrderCreatedListener(rabbitMQ.channel).listen();
+    new OrderCancelledListener(rabbitMQ.channel).listen();
+
+    process.on('SIGINT', async () => {
+      await rabbitMQ.close();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      await rabbitMQ.close();
+      process.exit(0);
+    });
   } catch (err) {
     console.error(err);
   }

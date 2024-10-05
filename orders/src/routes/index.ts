@@ -10,7 +10,7 @@ indexOrderRouter.get(
     const orders = await Order.find({ userId: req.currentUser!.id }).populate(
       'ticket'
     );
-    res.status(200).send(orders);
+    res.send(orders);
   }
 );
 

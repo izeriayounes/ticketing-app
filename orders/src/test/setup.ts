@@ -6,30 +6,26 @@ declare global {
   var signin: () => string[];
 }
 
-jest.mock('../events/publishers/order-created-publisher', () => ({
-  orderCreatedPublisher: {
-    publish: jest.fn().mockResolvedValue(true),
-  },
-}));
-
-jest.mock('../events/publishers/order-cancelled-publisher', () => ({
-  orderCancelledPublisher: {
-    publish: jest.fn().mockResolvedValue(true),
-  },
-}));
-
-jest.mock('@eztickets/common', () => {
-  const actualModule = jest.requireActual('@eztickets/common');
-
-  return {
-    ...actualModule,
-    rabbitMQ: {
-      getChannel: jest.fn().mockReturnValue({
-        ack: jest.fn(),
+jest.mock('../rabbitmq', () => ({
+  rabbitMQ: {
+    connect: jest.fn().mockResolvedValue(undefined),
+    channel: {
+      bindQueue: jest.fn().mockResolvedValue(undefined),
+      assertQueue: jest.fn().mockResolvedValue(undefined),
+      assertExchange: jest.fn().mockResolvedValue(undefined),
+      consume: jest.fn((queue, callback) => {
+        const msg = { content: Buffer.from(JSON.stringify({})) };
+        callback(msg);
+        return Promise.resolve();
       }),
+      publish: jest.fn().mockResolvedValue(true),
+      ack: jest.fn().mockResolvedValue(true),
     },
-  };
-});
+  },
+}));
+
+jest.mock('../events/publishers/order-cancelled-publisher');
+jest.mock('../events/publishers/order-created-publisher');
 
 let mongo: any;
 beforeAll(async () => {

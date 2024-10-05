@@ -1,42 +1,31 @@
-import { EventNames, rabbitMQ } from '@eztickets/common';
-import { ConsumeMessage } from 'amqplib';
+import { EventNames, Listener, OrderCreatedEvent } from '@eztickets/common';
+import { queueName } from './queue-name';
 import { Ticket } from '../../models/ticket';
-import { ticketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
+import { rabbitMQ } from '../../rabbitmq';
+import { TicketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
 
-class OrderCreatedListener {
-  private queue = EventNames.OrderCreated;
+export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
+  readonly subject = EventNames.OrderCreated;
+  queueName = queueName;
 
-  async listen(): Promise<void> {
-    await rabbitMQ.consume(this.queue, this.onMessage.bind(this));
-  }
+  async onMessage(data: OrderCreatedEvent['data']): Promise<void> {
+    const { id, ticket } = data;
 
-  async onMessage(msg: ConsumeMessage | null): Promise<void> {
-    if (msg) {
-      console.log(`Received event: ${this.queue}`);
+    const foundTicket = await Ticket.findById(ticket.id);
 
-      const { id, ticket } = JSON.parse(msg.content.toString());
+    if (!foundTicket) throw new Error('ticket not found');
 
-      const foundTicket = await Ticket.findById(ticket.id);
+    foundTicket.orderId = id;
 
-      if (!foundTicket) throw new Error('ticket not found');
+    await foundTicket.save();
 
-      foundTicket.set({
-        orderId: id,
-      });
-
-      await foundTicket.save();
-
-      await ticketUpdatedPublisher.publish({
-        id: foundTicket.id,
-        version: foundTicket.version,
-        title: foundTicket.title,
-        price: foundTicket.price,
-        userId: foundTicket.userId,
-      });
-
-      rabbitMQ.getChannel().ack(msg);
-    }
+    await new TicketUpdatedPublisher(rabbitMQ.channel).publish({
+      id: foundTicket.id,
+      version: foundTicket.version,
+      title: foundTicket.title,
+      price: foundTicket.price,
+      userId: foundTicket.userId,
+      orderId: foundTicket.orderId,
+    });
   }
 }
-
-export const orderCreatedListener = new OrderCreatedListener();

@@ -6,7 +6,8 @@ import {
   OrderStatus,
   requireAuth,
 } from '@eztickets/common';
-import { orderCancelledPublisher } from '../events/publishers/order-cancelled-publisher';
+import { OrderCancelledPublisher } from '../events/publishers/order-cancelled-publisher';
+import { rabbitMQ } from '../rabbitmq';
 const deleteOrderRouter = Router();
 
 deleteOrderRouter.delete(
@@ -22,7 +23,7 @@ deleteOrderRouter.delete(
     order.status = OrderStatus.Cancelled;
     await order.save();
 
-    orderCancelledPublisher.publish({
+    await new OrderCancelledPublisher(rabbitMQ.channel).publish({
       id: order.id,
       version: order.version,
       ticket: {

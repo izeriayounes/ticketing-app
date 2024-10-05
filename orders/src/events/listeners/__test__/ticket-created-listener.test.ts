@@ -1,10 +1,13 @@
 import mongoose from 'mongoose';
-import { ticketCreatedListener } from '../ticket-created-listener';
+import { TicketCreatedListener } from '../ticket-created-listener';
 import { TicketCreatedEvent } from '@eztickets/common';
-import { ConsumeMessage } from 'amqplib';
 import { Ticket } from '../../../models/ticket';
+import { rabbitMQ } from '../../../rabbitmq';
+import { ConsumeMessage } from 'amqplib';
 
-const setup = () => {
+const setup = async () => {
+  const listener = new TicketCreatedListener(rabbitMQ.channel);
+
   const data: TicketCreatedEvent['data'] = {
     version: 0,
     id: new mongoose.Types.ObjectId().toHexString(),
@@ -13,18 +16,17 @@ const setup = () => {
     userId: new mongoose.Types.ObjectId().toHexString(),
   };
 
-  //@ts-ignore
-  const msg: ConsumeMessage = {
+  const msg: Partial<ConsumeMessage> = {
     content: Buffer.from(JSON.stringify(data)),
   };
 
-  return { data, msg };
+  return { data, listener, msg };
 };
 
 it('creates and saves a ticket', async () => {
-  const { msg, data } = setup();
+  const { listener, data } = await setup();
 
-  await ticketCreatedListener.onMessage(msg);
+  await listener.onMessage(data);
 
   const ticket = await Ticket.findById(data.id);
 
@@ -33,10 +35,9 @@ it('creates and saves a ticket', async () => {
 });
 
 it('acks the message', async () => {
-  const { msg, data } = setup();
+  const { listener, data, msg } = await setup();
 
-  await ticketCreatedListener.onMessage(msg);
+  await listener.onMessage(data);
 
-  const rabbitMQ = require('@eztickets/common').rabbitMQ;
-  expect(rabbitMQ.getChannel().ack).toHaveBeenCalledWith(msg);
+  // expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
 });

@@ -2,7 +2,8 @@ import request from 'supertest';
 import { app } from '../../app';
 import mongoose from 'mongoose';
 import { Ticket } from '../../models/ticket';
-import { orderCreatedPublisher } from '../../events/publishers/order-created-publisher';
+import { OrderCreatedPublisher } from '../../events/publishers/order-created-publisher';
+import { rabbitMQ } from '../../rabbitmq';
 
 let id = new mongoose.Types.ObjectId().toHexString();
 
@@ -53,5 +54,5 @@ it('emits an order create event.', async () => {
     .send({ ticketId: ticket.id })
     .expect(201);
 
-  expect(orderCreatedPublisher.publish).toHaveBeenCalled();
+  expect(OrderCreatedPublisher.prototype.publish).toHaveBeenCalled();
 });

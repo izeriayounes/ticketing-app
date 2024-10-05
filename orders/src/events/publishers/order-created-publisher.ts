@@ -1,12 +1,5 @@
-import { rabbitMQ, EventNames, OrderCreatedEvent } from '@eztickets/common';
+import { EventNames, OrderCreatedEvent, Publisher } from '@eztickets/common';
 
-class OrderCreatedPublisher {
-  async publish(ticketData: OrderCreatedEvent['data']): Promise<void> {
-    const message = JSON.stringify(ticketData);
-
-    await rabbitMQ.sendToQueue(EventNames.OrderCreated, Buffer.from(message));
-    console.log(`Event published: ${EventNames.OrderCreated}`);
-  }
+export class OrderCreatedPublisher extends Publisher<OrderCreatedEvent> {
+  readonly subject = EventNames.OrderCreated;
 }
-
-export const orderCreatedPublisher = new OrderCreatedPublisher();

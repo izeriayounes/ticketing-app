@@ -54,6 +54,7 @@ ticketSchema.statics.findByEvent = async (event: {
 }) => {
   return await Ticket.findOne({ _id: event.id, version: event.version - 1 });
 };
+
 ticketSchema.statics.build = (attrs: TicketAttrs) => {
   return new Ticket({
     _id: attrs.id,

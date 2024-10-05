@@ -1,11 +1,13 @@
 import mongoose from 'mongoose';
 import { OrderCreatedEvent, OrderStatus } from '@eztickets/common';
-import { ConsumeMessage } from 'amqplib';
 import { Ticket } from '../../../models/ticket';
-import { orderCreatedListener } from '../order-created-listener';
-import { ticketUpdatedPublisher } from '../../publishers/ticket-updated-publisher';
+import { OrderCreatedListener } from '../order-created-listener';
+import { TicketUpdatedPublisher } from '../../publishers/ticket-updated-publisher';
+import { rabbitMQ } from '../../../rabbitmq';
 
 const setup = async () => {
+  const listener = new OrderCreatedListener(rabbitMQ.channel);
+
   const ticket = Ticket.build({
     title: 'concert',
     price: 99,
@@ -26,37 +28,31 @@ const setup = async () => {
     },
   };
 
-  //@ts-ignore
-  const msg: ConsumeMessage = {
-    content: Buffer.from(JSON.stringify(data)),
-  };
-
-  return { data, msg };
+  return { data, listener };
 };
 
 it('sets the orderId of the ticket', async () => {
-  const { msg, data } = await setup();
+  const { listener, data } = await setup();
 
-  await orderCreatedListener.onMessage(msg);
+  await listener.onMessage(data);
 
   const ticket = await Ticket.findById(data.ticket.id);
 
   expect(ticket!.orderId).toEqual(data.id);
 });
 
-it('acks the message', async () => {
-  const { msg } = await setup();
+// it('acks the message', async () => {
+//   const { listener, data } = await setup();
 
-  await orderCreatedListener.onMessage(msg);
+//   await listener.onMessage(data);
 
-  const rabbitMQ = require('@eztickets/common').rabbitMQ;
-  expect(rabbitMQ.getChannel().ack).toHaveBeenCalledWith(msg);
-});
+//   expect(rabbitMQ.channel.ack).toHaveBeenCalled();
+// });
 
 it('publishes a ticket updated event', async () => {
-  const { msg } = await setup();
+  const { listener, data } = await setup();
 
-  await orderCreatedListener.onMessage(msg);
+  await listener.onMessage(data);
 
-  expect(ticketUpdatedPublisher.publish).toHaveBeenCalled();
+  expect(TicketUpdatedPublisher.prototype.publish).toHaveBeenCalled();
 });

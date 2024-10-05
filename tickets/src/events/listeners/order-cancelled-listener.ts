@@ -1,42 +1,28 @@
-import { EventNames, rabbitMQ } from '@eztickets/common';
-import { ConsumeMessage } from 'amqplib';
+import { EventNames, Listener, OrderCancelledEvent } from '@eztickets/common';
+import { queueName } from './queue-name';
 import { Ticket } from '../../models/ticket';
-import { ticketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
+import { rabbitMQ } from '../../rabbitmq';
+import { TicketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
 
-class OrderCancelledListener {
-  private queue = EventNames.OrderCancelled;
+export class OrderCancelledListener extends Listener<OrderCancelledEvent> {
+  readonly subject = EventNames.OrderCancelled;
+  queueName = queueName;
 
-  async listen(): Promise<void> {
-    await rabbitMQ.consume(this.queue, this.onMessage.bind(this));
-  }
+  async onMessage(data: OrderCancelledEvent['data']): Promise<void> {
+    const ticket = await Ticket.findById(data.ticket.id);
 
-  async onMessage(msg: ConsumeMessage | null): Promise<void> {
-    if (msg) {
-      console.log(`Received event: ${this.queue}`);
+    if (!ticket) throw new Error('ticket not found');
 
-      const { ticket } = JSON.parse(msg.content.toString());
+    ticket.orderId = undefined;
 
-      const foundTicket = await Ticket.findById(ticket.id);
+    await ticket.save();
 
-      if (!foundTicket) throw new Error('ticket not found');
-
-      foundTicket.set({
-        orderId: undefined,
-      });
-
-      await foundTicket.save();
-
-      await ticketUpdatedPublisher.publish({
-        id: foundTicket.id,
-        version: foundTicket.version,
-        title: foundTicket.title,
-        price: foundTicket.price,
-        userId: foundTicket.userId,
-      });
-
-      rabbitMQ.getChannel().ack(msg);
-    }
+    await new TicketUpdatedPublisher(rabbitMQ.channel).publish({
+      id: ticket.id,
+      version: ticket.version,
+      title: ticket.title,
+      price: ticket.price,
+      userId: ticket.userId,
+    });
   }
 }
-
-export const orderCancelledListener = new OrderCancelledListener();

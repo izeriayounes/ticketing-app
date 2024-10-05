@@ -8,7 +8,8 @@ import {
   validateRequest,
 } from '@eztickets/common';
 import { body } from 'express-validator';
-import { ticketUpdatedPublisher } from '../events/publishers/ticket-updated-publisher';
+import { TicketUpdatedPublisher } from '../events/publishers/ticket-updated-publisher';
+import { rabbitMQ } from '../rabbitmq';
 
 const updateTicketRouter = express.Router();
 
@@ -35,7 +36,7 @@ updateTicketRouter.put(
     ticket.set(req.body);
     await ticket.save();
 
-    await ticketUpdatedPublisher.publish({
+    await new TicketUpdatedPublisher(rabbitMQ.channel).publish({
       id: ticket.id,
       version: ticket.version,
       title: ticket.title,

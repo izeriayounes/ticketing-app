@@ -1,30 +1,20 @@
-import { EventNames, rabbitMQ } from '@eztickets/common';
-import { ConsumeMessage } from 'amqplib';
+import { EventNames, Listener, TicketUpdatedEvent } from '@eztickets/common';
 import { Ticket } from '../../models/ticket';
+import { queueName } from './queue-name';
 
-class TicketUpdatedListener {
-  private queue = EventNames.TicketUpdated;
+export class TicketUpdatedListener extends Listener<TicketUpdatedEvent> {
+  queueName = queueName;
+  readonly subject = EventNames.TicketUpdated;
 
-  async listen(): Promise<void> {
-    await rabbitMQ.consume(this.queue, this.onMessage.bind(this));
-  }
+  async onMessage(data: TicketUpdatedEvent['data']): Promise<void> {
+    const { id, title, price, version } = data;
 
-  async onMessage(msg: ConsumeMessage | null): Promise<void> {
-    if (msg) {
-      console.log(`Received event: ${this.queue}`);
+    const ticket = await Ticket.findByEvent({ id, version });
 
-      const { id, title, price, version } = JSON.parse(msg.content.toString());
+    if (!ticket) throw Error('Ticket not found');
 
-      const ticket = await Ticket.findByEvent({ id, version });
+    ticket.set({ title, price });
 
-      if (!ticket) throw Error('Ticket not found');
-
-      ticket.set({ title, price });
-      await ticket.save();
-
-      rabbitMQ.getChannel().ack(msg);
-    }
+    await ticket.save();
   }
 }
-
-export const ticketUpdatedListener = new TicketUpdatedListener();

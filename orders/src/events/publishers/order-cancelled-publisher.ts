@@ -1,12 +1,17 @@
-import { rabbitMQ, EventNames, OrderCancelledEvent } from '@eztickets/common';
+import { Publisher, OrderCancelledEvent, EventNames } from '@eztickets/common';
 
-class OrderCancelledPublisher {
-  async publish(ticketData: OrderCancelledEvent['data']): Promise<void> {
-    const message = JSON.stringify(ticketData);
+export class OrderCancelledPublisher extends Publisher<OrderCancelledEvent> {
+  readonly subject = EventNames.OrderCancelled;
 
-    await rabbitMQ.sendToQueue(EventNames.OrderCancelled, Buffer.from(message));
-    console.log(`Event published: ${EventNames.OrderCancelled}`);
+  async publish(data: OrderCancelledEvent['data']): Promise<void> {
+    const message = JSON.stringify(data);
+
+    this.channel.publish(this.subject, '', Buffer.from(message), {
+      headers: {
+        'x-delay': 15 * 60 * 1000,
+      },
+    });
+
+    console.log(`Event published to subject: ${this.subject}`);
   }
 }
-
-export const orderCancelledPublisher = new OrderCancelledPublisher();

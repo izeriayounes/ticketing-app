@@ -17,7 +17,6 @@ it('implements optimistic concurrency control', async () => {
 
   await firstInstance!.save();
 
-  //how to expect that save will fail here please
   await expect(secondInstance!.save()).rejects.toThrow();
 });
 

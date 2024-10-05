@@ -2,7 +2,7 @@ import request from 'supertest';
 import { app } from '../../app';
 import { Ticket } from '../../models/ticket';
 import mongoose from 'mongoose';
-import { ticketUpdatedPublisher } from '../../events/publishers/ticket-updated-publisher';
+import { TicketUpdatedPublisher } from '../../events/publishers/ticket-updated-publisher';
 
 it('returns a 404 error if ticket is not found', async () => {
   const id = new mongoose.Types.ObjectId().toHexString();
@@ -111,7 +111,7 @@ it('publishes an event', async () => {
     })
     .expect(200);
 
-  expect(ticketUpdatedPublisher.publish).toHaveBeenCalled();
+  expect(TicketUpdatedPublisher.prototype.publish).toHaveBeenCalled();
 });
 
 it('rejects updates if the ticket is reserved', async () => {

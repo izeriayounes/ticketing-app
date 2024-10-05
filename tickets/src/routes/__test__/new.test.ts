@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../../app';
 import { Ticket } from '../../models/ticket';
-import { ticketCreatedPublisher } from '../../events/publishers/ticket-created-publisher';
+import { TicketCreatedPublisher } from '../../events/publishers/ticket-created-publisher';
 
 it('has a route listening to /api/tickets for post requests', async () => {
   const res = await request(app).post('/api/tickets').send({});
@@ -86,5 +86,5 @@ it('publishes an event', async () => {
     })
     .expect(201);
 
-  expect(ticketCreatedPublisher.publish).toHaveBeenCalled();
+  expect(TicketCreatedPublisher.prototype.publish).toHaveBeenCalled();
 });

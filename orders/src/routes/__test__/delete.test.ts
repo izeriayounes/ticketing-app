@@ -3,8 +3,9 @@ import { Ticket } from '../../models/ticket';
 import { app } from '../../app';
 import { OrderStatus } from '@eztickets/common';
 import { Order } from '../../models/order';
-import { orderCancelledPublisher } from '../../events/publishers/order-cancelled-publisher';
+import { OrderCancelledPublisher } from '../../events/publishers/order-cancelled-publisher';
 import mongoose from 'mongoose';
+import { rabbitMQ } from '../../rabbitmq';
 
 it('cancels the order', async () => {
   const ticket = Ticket.build({
@@ -52,5 +53,7 @@ it('emits an orderCancelled event', async () => {
     .set('Cookie', user)
     .expect(204);
 
-  expect(orderCancelledPublisher.publish).toHaveBeenCalled();
+  //chatgpt i know that this last line is false how to rectify it pls?
+
+  expect(OrderCancelledPublisher.prototype.publish).toHaveBeenCalled();
 });

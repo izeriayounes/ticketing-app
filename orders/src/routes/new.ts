@@ -9,7 +9,8 @@ import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
 import { Ticket } from '../models/ticket';
 import { Order, OrderStatus } from '../models/order';
-import { orderCreatedPublisher } from '../events/publishers/order-created-publisher';
+import { OrderCreatedPublisher } from '../events/publishers/order-created-publisher';
+import { rabbitMQ } from '../rabbitmq';
 
 const newOrderRouter = express.Router();
 
@@ -49,12 +50,12 @@ newOrderRouter.post(
 
     await order.save();
 
-    orderCreatedPublisher.publish({
+    await new OrderCreatedPublisher(rabbitMQ.channel).publish({
       id: order.id,
+      version: order.version,
       status: order.status,
       userId: order.userId,
       expiresAt: order.expiresAt.toISOString(),
-      version: order.version,
       ticket: {
         id: ticket.id,
         price: ticket.price,
