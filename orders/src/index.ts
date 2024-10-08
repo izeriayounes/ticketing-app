@@ -4,6 +4,7 @@ import { TicketCreatedListener } from './events/listeners/ticket-created-listene
 import { TicketUpdatedListener } from './events/listeners/ticket-updated-listener';
 import { rabbitMQ } from './rabbitmq';
 import { PaymentCreatedListner } from './events/listeners/payment-created-listener';
+import { ExpirationCompletelistener } from './events/listeners/expiration-complete-listener';
 
 const start = async () => {
   if (!process.env.JWT_KEY) {
@@ -25,6 +26,7 @@ const start = async () => {
     new TicketCreatedListener(rabbitMQ.channel).listen();
     new TicketUpdatedListener(rabbitMQ.channel).listen();
     new PaymentCreatedListner(rabbitMQ.channel).listen();
+    new ExpirationCompletelistener(rabbitMQ.channel).listen();
   } catch (err) {
     console.error(err);
   }

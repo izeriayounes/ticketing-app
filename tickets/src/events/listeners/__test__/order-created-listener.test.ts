@@ -28,31 +28,36 @@ const setup = async () => {
     },
   };
 
-  return { data, listener };
+  //@ts-ignore
+  const msg: ConsumeMessage = {
+    content: Buffer.from(JSON.stringify(data)),
+  };
+
+  return { data, listener, msg };
 };
 
 it('sets the orderId of the ticket', async () => {
-  const { listener, data } = await setup();
+  const { listener, data, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   const ticket = await Ticket.findById(data.ticket.id);
 
   expect(ticket!.orderId).toEqual(data.id);
 });
 
-// it('acks the message', async () => {
-//   const { listener, data } = await setup();
+it('acks the message', async () => {
+  const { listener, data, msg } = await setup();
 
-//   await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
-//   expect(rabbitMQ.channel.ack).toHaveBeenCalled();
-// });
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
+});
 
 it('publishes a ticket updated event', async () => {
-  const { listener, data } = await setup();
+  const { listener, data, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   expect(TicketUpdatedPublisher.prototype.publish).toHaveBeenCalled();
 });

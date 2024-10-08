@@ -16,7 +16,8 @@ const setup = async () => {
     userId: new mongoose.Types.ObjectId().toHexString(),
   };
 
-  const msg: Partial<ConsumeMessage> = {
+  //@ts-ignore
+  const msg: ConsumeMessage = {
     content: Buffer.from(JSON.stringify(data)),
   };
 
@@ -24,9 +25,9 @@ const setup = async () => {
 };
 
 it('creates and saves a ticket', async () => {
-  const { listener, data } = await setup();
+  const { listener, data, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   const ticket = await Ticket.findById(data.id);
 
@@ -37,7 +38,7 @@ it('creates and saves a ticket', async () => {
 it('acks the message', async () => {
   const { listener, data, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
-  // expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
 });

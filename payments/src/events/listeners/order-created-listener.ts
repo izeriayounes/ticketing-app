@@ -1,12 +1,14 @@
+import { ConsumeMessage } from 'amqplib';
 import { Order } from '../../models/order';
-import { queueName } from './queue-name';
+import { orderCreatedQueue } from './queues';
 import { EventNames, Listener, OrderCreatedEvent } from '@eztickets/common';
+import { rabbitMQ } from '../../rabbitmq';
 
 export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   readonly subject = EventNames.OrderCreated;
-  queueName = queueName;
+  queueName = orderCreatedQueue;
 
-  async onMessage(data: OrderCreatedEvent['data']): Promise<void> {
+  async onMessage(data: OrderCreatedEvent['data'], msg: ConsumeMessage) {
     const order = Order.build({
       id: data.id,
       version: data.version,
@@ -16,5 +18,7 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
     });
 
     await order.save();
+
+    rabbitMQ.channel.ack(msg);
   }
 }

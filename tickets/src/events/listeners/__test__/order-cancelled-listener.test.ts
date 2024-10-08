@@ -27,7 +27,8 @@ const setup = async () => {
     },
   };
 
-  const msg: Partial<ConsumeMessage> = {
+  //@ts-ignore
+  const msg: ConsumeMessage = {
     content: Buffer.from(JSON.stringify(data)),
   };
 
@@ -39,7 +40,7 @@ it('updates the ticket, publishes an event and acks the message', async () => {
 
   const { data, msg } = await setup();
 
-  await orderCancelledListener.onMessage(data);
+  await orderCancelledListener.onMessage(data, msg);
 
   const ticket = await Ticket.findById(data.ticket.id);
 
@@ -47,5 +48,5 @@ it('updates the ticket, publishes an event and acks the message', async () => {
 
   expect(TicketUpdatedPublisher.prototype.publish).toHaveBeenCalled();
 
-  // expect(rabbitMQ.channel.ack).toHaveBeenCalled();
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
 });

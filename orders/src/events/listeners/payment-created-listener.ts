@@ -4,18 +4,22 @@ import {
   OrderStatus,
   PaymentCreatedEvent,
 } from '@eztickets/common';
-import { queueName } from './queue-name';
 import { Order } from '../../models/order';
+import { paymentCreatedQueue } from './queues';
+import { ConsumeMessage } from 'amqplib';
+import { rabbitMQ } from '../../rabbitmq';
 
 export class PaymentCreatedListner extends Listener<PaymentCreatedEvent> {
-  queueName = queueName;
+  queueName = paymentCreatedQueue;
   readonly subject = EventNames.PaymentCreated;
 
-  async onMessage(data: PaymentCreatedEvent['data']) {
+  async onMessage(data: PaymentCreatedEvent['data'], msg: ConsumeMessage) {
     const order = await Order.findById(data.orderId);
     if (!order) throw new Error('Order not found');
 
     order.status = OrderStatus.Complete;
     await order.save();
+
+    rabbitMQ.channel.ack(msg);
   }
 }

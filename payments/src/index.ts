@@ -21,6 +21,9 @@ const start = async () => {
     await rabbitMQ.connect(process.env.RABBITMQ_URI);
     console.log('Connected to RabbitMQ');
 
+    new OrderCancelledListener(rabbitMQ.channel).listen();
+    new OrderCreatedListener(rabbitMQ.channel).listen();
+
     process.on('SIGINT', async () => {
       await rabbitMQ.close();
       process.exit(0);
@@ -28,12 +31,8 @@ const start = async () => {
 
     process.on('SIGTERM', async () => {
       await rabbitMQ.close();
-
       process.exit(0);
     });
-
-    new OrderCancelledListener(rabbitMQ.channel).listen();
-    new OrderCreatedListener(rabbitMQ.channel).listen();
   } catch (err) {
     console.error(err);
   }

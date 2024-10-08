@@ -1,14 +1,18 @@
 import { EventNames, Listener, OrderCreatedEvent } from '@eztickets/common';
-import { queueName } from './queue-name';
+import { orderCreatedQueue } from './queues';
 import { Ticket } from '../../models/ticket';
 import { rabbitMQ } from '../../rabbitmq';
 import { TicketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
+import { ConsumeMessage } from 'amqplib';
 
 export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   readonly subject = EventNames.OrderCreated;
-  queueName = queueName;
+  queueName = orderCreatedQueue;
 
-  async onMessage(data: OrderCreatedEvent['data']): Promise<void> {
+  async onMessage(
+    data: OrderCreatedEvent['data'],
+    msg: ConsumeMessage
+  ): Promise<void> {
     const { id, ticket } = data;
 
     const foundTicket = await Ticket.findById(ticket.id);
@@ -27,5 +31,7 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
       userId: foundTicket.userId,
       orderId: foundTicket.orderId,
     });
+
+    rabbitMQ.channel.ack(msg);
   }
 }

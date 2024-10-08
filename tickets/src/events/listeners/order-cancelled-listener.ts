@@ -1,14 +1,18 @@
 import { EventNames, Listener, OrderCancelledEvent } from '@eztickets/common';
-import { queueName } from './queue-name';
+import { orderCancelledQueue } from './queues';
 import { Ticket } from '../../models/ticket';
 import { rabbitMQ } from '../../rabbitmq';
 import { TicketUpdatedPublisher } from '../publishers/ticket-updated-publisher';
+import { ConsumeMessage } from 'amqplib';
 
 export class OrderCancelledListener extends Listener<OrderCancelledEvent> {
   readonly subject = EventNames.OrderCancelled;
-  queueName = queueName;
+  queueName = orderCancelledQueue;
 
-  async onMessage(data: OrderCancelledEvent['data']): Promise<void> {
+  async onMessage(
+    data: OrderCancelledEvent['data'],
+    msg: ConsumeMessage
+  ): Promise<void> {
     const ticket = await Ticket.findById(data.ticket.id);
 
     if (!ticket) throw new Error('ticket not found');
@@ -24,5 +28,7 @@ export class OrderCancelledListener extends Listener<OrderCancelledEvent> {
       price: ticket.price,
       userId: ticket.userId,
     });
+
+    rabbitMQ.channel.ack(msg);
   }
 }

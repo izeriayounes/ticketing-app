@@ -26,7 +26,8 @@ const setup = async () => {
     },
   };
 
-  const msg: Partial<ConsumeMessage> = {
+  //@ts-ignore
+  const msg: ConsumeMessage = {
     content: Buffer.from(JSON.stringify(data)),
   };
 
@@ -34,21 +35,21 @@ const setup = async () => {
 };
 
 it('updates the status of the order', async () => {
-  const { data, order, listener } = await setup();
+  const { data, order, listener, msg } = await setup();
 
   const orders = await Order.find({});
   console.log(`orders: ${orders}`);
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   const updatedOrder = await Order.findById(order.id);
   expect(updatedOrder!.status).toEqual(OrderStatus.Cancelled);
 });
 
 it('acks the message', async () => {
-  const { data, listener } = await setup();
+  const { data, listener, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
-  // expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
 });

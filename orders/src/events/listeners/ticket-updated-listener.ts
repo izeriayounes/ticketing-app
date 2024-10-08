@@ -1,12 +1,17 @@
 import { EventNames, Listener, TicketUpdatedEvent } from '@eztickets/common';
 import { Ticket } from '../../models/ticket';
-import { queueName } from './queue-name';
+import { ticketUpdatedQueue } from './queues';
+import { ConsumeMessage } from 'amqplib';
+import { rabbitMQ } from '../../rabbitmq';
 
 export class TicketUpdatedListener extends Listener<TicketUpdatedEvent> {
-  queueName = queueName;
+  queueName = ticketUpdatedQueue;
   readonly subject = EventNames.TicketUpdated;
 
-  async onMessage(data: TicketUpdatedEvent['data']): Promise<void> {
+  async onMessage(
+    data: TicketUpdatedEvent['data'],
+    msg: ConsumeMessage
+  ): Promise<void> {
     const { id, title, price, version } = data;
 
     const ticket = await Ticket.findByEvent({ id, version });
@@ -16,5 +21,7 @@ export class TicketUpdatedListener extends Listener<TicketUpdatedEvent> {
     ticket.set({ title, price });
 
     await ticket.save();
+
+    rabbitMQ.channel.ack(msg);
   }
 }

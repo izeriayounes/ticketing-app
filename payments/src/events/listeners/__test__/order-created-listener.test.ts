@@ -19,13 +19,18 @@ const setup = async () => {
     },
   };
 
-  return { data, listener };
+  //@ts-ignore
+  const msg: ConsumeMessage = {
+    content: Buffer.from(JSON.stringify(data)),
+  };
+
+  return { data, listener, msg };
 };
 
 it('replicates the order info', async () => {
-  const { data, listener } = await setup();
+  const { data, listener, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   const order = await Order.findById(data.id);
 
@@ -33,9 +38,9 @@ it('replicates the order info', async () => {
 });
 
 it('acks the message', async () => {
-  const { data, listener } = await setup();
+  const { data, listener, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
-  // expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
 });

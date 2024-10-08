@@ -33,9 +33,9 @@ const setup = async () => {
 };
 
 it('finds, updates, and saves a ticket', async () => {
-  const { data, listener } = await setup();
+  const { data, listener, msg } = await setup();
 
-  await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
   const foundTicket = await Ticket.findById(data.id);
 
@@ -44,22 +44,22 @@ it('finds, updates, and saves a ticket', async () => {
   expect(foundTicket!.version).toEqual(data.version);
 });
 
-// it('acks the message', async () => {
-//   const { data, listener, msg } = await setup();
+it('acks the message', async () => {
+  const { data, listener, msg } = await setup();
 
-//   await listener.onMessage(data);
+  await listener.onMessage(data, msg);
 
-//   expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
-// });
+  expect(rabbitMQ.channel.ack).toHaveBeenCalledWith(msg);
+});
 
-// it('does not aknowledge event if a version is skipped', async () => {
-//   const { listener, data } = await setup();
+it('does not aknowledge event if a version is skipped', async () => {
+  const { listener, data, msg } = await setup();
 
-//   data.version = 10;
+  data.version = 10;
 
-//   try {
-//     await listener.onMessage(data);
-//   } catch {}
+  try {
+    await listener.onMessage(data, msg);
+  } catch {}
 
-//   expect(rabbitMQ.channel.ack).not.toHaveBeenCalled();
-// });
+  expect(rabbitMQ.channel.ack).not.toHaveBeenCalledWith(msg);
+});

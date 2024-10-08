@@ -3,7 +3,6 @@ import { app } from '../../app';
 import mongoose from 'mongoose';
 import { Ticket } from '../../models/ticket';
 import { OrderCreatedPublisher } from '../../events/publishers/order-created-publisher';
-import { rabbitMQ } from '../../rabbitmq';
 
 let id = new mongoose.Types.ObjectId().toHexString();
 

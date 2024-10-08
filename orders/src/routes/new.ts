@@ -14,7 +14,7 @@ import { rabbitMQ } from '../rabbitmq';
 
 const newOrderRouter = express.Router();
 
-const EXPIRATION_WINDOW_SECONDS = 15 * 60;
+const EXPIRATION_WINDOW_SECONDS = 1 * 60;
 
 newOrderRouter.post(
   '/api/orders',
@@ -33,6 +33,9 @@ newOrderRouter.post(
     if (!ticket) {
       throw new NotFoundError();
     }
+    // const orders = await Order.find({});
+    // console.log(orders);
+
     const isReserved = await ticket.isReserved();
     if (isReserved) {
       throw new BadRequestError('Ticket already reserved');
