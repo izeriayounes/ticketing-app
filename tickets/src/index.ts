@@ -15,6 +15,7 @@ const start = async () => {
     throw new Error('RABBITMQ_URI must be defined.');
   }
   try {
+    console.log('Starting up...');
     await mongoose.connect(process.env.MONGO_URI);
     console.log('connected to mongodb');
 
