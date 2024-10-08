@@ -1,4 +1,4 @@
-name: Tests
+name: tests-payments
 
 # Controls when the workflow will run
 on:
@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cd auth && npm install && npm run test:ci
+      - run: cd payments && npm install && npm run test:ci
