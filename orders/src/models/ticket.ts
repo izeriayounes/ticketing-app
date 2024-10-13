@@ -65,7 +65,6 @@ ticketSchema.statics.build = (attrs: TicketAttrs) => {
 
 ticketSchema.methods.isReserved = async function () {
   const orders = await Order.find({});
-  console.log(`inside the modelll: ${orders}`);
 
   const existingOrder = await Order.findOne({
     ticket: this,

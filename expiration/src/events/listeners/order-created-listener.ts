@@ -8,14 +8,10 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   queueName = orderCreatedQueue;
   readonly subject = EventNames.OrderCreated;
 
-  async onMessage(
-    data: OrderCreatedEvent['data'],
-    msg: ConsumeMessage
-  ): Promise<void> {
-    const delay =
-      new Date(data.expiresAt).getSeconds() - new Date().getSeconds();
+  async onMessage(data: OrderCreatedEvent['data'], msg: ConsumeMessage) {
+    const delay = new Date(data.expiresAt).getTime() - new Date().getTime();
 
-    await expirationQueue.add({ orderId: data.id }, { delay: 10000 });
+    await expirationQueue.add({ orderId: data.id }, { delay });
 
     rabbitMQ.channel.ack(msg);
   }
