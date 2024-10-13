@@ -33,8 +33,6 @@ newOrderRouter.post(
     if (!ticket) {
       throw new NotFoundError();
     }
-    // const orders = await Order.find({});
-    // console.log(orders);
 
     const isReserved = await ticket.isReserved();
     if (isReserved) {

@@ -1,23 +1,38 @@
-import buildClient from '../api/buildClient';
+import Link from 'next/link';
 
-const LandingPage = ({ currentUser }) => {
+const LandingPage = ({ currentUser, tickets }) => {
+  const ticketList = tickets.map((ticket) => (
+    <tr key={ticket.id}>
+      <td>{ticket.title}</td>
+      <td>{ticket.price}</td>
+      <td>
+        <Link legacyBehavior href={`/tickets/${ticket.id}`}>
+          <a>View</a>
+        </Link>
+      </td>
+    </tr>
+  ));
   return (
     <div>
-      {currentUser ? (
-        <h1> You are signed in </h1>
-      ) : (
-        <h1>You are not signed in</h1>
-      )}
+      <h1>Tickets</h1>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>{ticketList}</tbody>
+      </table>
     </div>
   );
 };
 
-LandingPage.getInitialProps = async ({ req }) => {
-  const client = buildClient({ req });
+LandingPage.getInitialProps = async (context, client, currentUser) => {
+  const { data } = await client.get('/api/tickets');
 
-  const { data } = await client.get('/api/users/currentuser');
-
-  return data;
+  return { tickets: data };
 };
 
 export default LandingPage;

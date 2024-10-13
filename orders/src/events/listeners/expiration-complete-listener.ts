@@ -20,8 +20,7 @@ export class ExpirationCompletelistener extends Listener<ExpirationCompleteEvent
 
     if (!order) throw new Error('Order not found');
 
-    if (order.status === OrderStatus.Complete)
-      throw new BadRequestError('order already paid');
+    if (order.status === OrderStatus.Complete) return rabbitMQ.channel.ack(msg);
 
     order.status = OrderStatus.Cancelled;
     await order.save();
